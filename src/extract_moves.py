@@ -106,7 +106,6 @@ def extract_moves():
                             "result": result,
                             "your_rating": your_rating,
                             "opponent_rating": opponent_rating,
-                            "piece": piece,
                             "is_capture": is_capture,
                             "is_check": is_check,
                             "is_castling": is_castling,
