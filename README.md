@@ -240,6 +240,8 @@ python src/evaluate.py
 
 This project is based on the **Maia3** architecture developed by the University of Toronto Computer Science Laboratory. The pretrained Maia3-5M checkpoint is used solely for transfer learning and research purposes.
 
+- Maia3 GitHub: https://github.com/CSSLab/maia3
+- Maia3 Hugging Face Models: https://huggingface.co/UofTCSSLab
 ---
 
 ## License
