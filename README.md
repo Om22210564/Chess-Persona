@@ -204,6 +204,51 @@ python src/evaluate.py
 
 ---
 
+## 🎮 Using Chess-Persona with Nibbler
+
+After fine-tuning, your personalized model can be loaded directly into **Nibbler** (or any UCI-compatible chess GUI).
+
+### 1. Make the launcher executable
+
+The repository already includes a launcher script (`Chess-Persona.sh`) that starts the engine with your fine-tuned weights.
+
+Grant execute permission:
+
+```bash
+chmod +x Chess-Persona.sh
+```
+
+If your checkpoint is not named `best_policy.pt` or is stored in a different location, edit `Chess-Persona.sh` and update the checkpoint path accordingly.
+
+### 2. Add the engine in Nibbler
+
+| Setting | Value |
+|---------|-------|
+| **Engine Executable** | `/path/to/Chess-Persona/Chess-Persona.sh` |
+| **Arguments** | *(leave empty)* |
+
+For example:
+
+```text
+/home/username/Chess-Persona/Chess-Persona.sh
+```
+
+Nibbler will automatically launch the script, which starts the Maia3 engine using your fine-tuned checkpoint.
+
+### 3. Start Playing
+
+Once loaded, Chess-Persona will recommend moves based on the playing style learned from your Lichess games.
+
+---
+
+### Example
+
+The screenshot below shows **Chess-Persona** successfully running inside Nibbler after fine-tuning on a player's games.
+
+![Chess-Persona running in Nibbler](images/nibbler-demo.png)
+
+---
+
 ## Current Status
 
 - ✅ Maia3-5M pretrained weights loaded successfully
@@ -242,6 +287,7 @@ This project is based on the **Maia3** architecture developed by the University 
 
 - Maia3 GitHub: https://github.com/CSSLab/maia3
 - Maia3 Hugging Face Models: https://huggingface.co/UofTCSSLab
+- Nibbler: https://github.com/rooklift/nibbler
 ---
 
 ## License
