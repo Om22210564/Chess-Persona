@@ -56,24 +56,20 @@ The resulting model behaves as a personalized chess assistant that recommends mo
 ChessBot/
 │
 ├── src/
-│   ├── model.py              # Maia3 model implementation
-│   ├── model_config.py       # Model configuration (5M architecture)
-│   ├── load_pretrained.py    # Load pretrained Maia3 weights
-│   ├── maia_dataset.py       # PGN dataset loader
-│   ├── board_encoder.py      # Board encoding utilities
-│   ├── move_vocab.py         # Move vocabulary (4352 moves)
-│   ├── train.py              # Fine-tuning script
+│   ├── model_config.py       # Maia3-5M configuration
+│   ├── load_pretrained.py    # Maia3 checkpoint/model loading helpers
+│   ├── maia_dataset.py       # Maia-compatible PGN dataset loader
+│   ├── train.py              # Policy fine-tuning script
 │   ├── evaluate.py           # Evaluation script
+│   ├── extract_games.py      # PGN game metadata extraction
+│   ├── extract_moves.py      # Player move metadata extraction
+│   ├── validate_dataset.py   # Processed data validation
 │   ├── parser.py
-│   ├── utils.py
-│   └── ...
+│   └── utils.py
 │
-├── data/
-│   ├── train.pgn
-│   └── test.pgn
-│
-├── checkpoints/
-│
+├── legacy/                   # Older custom model/encoder/vocab code
+├── data/                     # Local PGNs/processed data, ignored by git
+├── images/
 ├── requirements.txt
 └── README.md
 ```

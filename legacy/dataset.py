@@ -6,8 +6,12 @@ import chess.pgn
 
 from collections import deque
 
-from board_encoder import encode_board
-from move_vocab import generate_move_vocabulary, mirror_move
+try:
+    from .board_encoder import encode_board
+    from .move_vocab import generate_move_vocabulary, mirror_move
+except ImportError:
+    from board_encoder import encode_board
+    from move_vocab import generate_move_vocabulary, mirror_move
 
 move_to_idx, idx_to_move = generate_move_vocabulary()
 

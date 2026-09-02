@@ -1,6 +1,6 @@
 import torch
 
-from model import ChessTransformer
+from legacy.model import ChessTransformer
 
 model = ChessTransformer()
 

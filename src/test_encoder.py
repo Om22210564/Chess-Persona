@@ -1,6 +1,6 @@
 import chess
 
-from board_encoder import encode_board
+from legacy.board_encoder import encode_board
 
 board = chess.Board()
 

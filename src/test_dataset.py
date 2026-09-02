@@ -1,4 +1,4 @@
-from dataset import PGNParser
+from legacy.dataset import PGNParser
 import numpy as np
 
 parser = PGNParser(

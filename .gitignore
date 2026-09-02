@@ -1,6 +1,20 @@
-lichess_games.pgn
+# Python
 __pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Data and generated artifacts
+data/raw/
+data/processed/
 *.csv
+*.pt
+*.pth
+*.ckpt
+
+# Vendored/external dependencies
 external/
-maia3_finetuned_policy.pt
-best_policy.pt
+
+# Notebooks
+.ipynb_checkpoints/
