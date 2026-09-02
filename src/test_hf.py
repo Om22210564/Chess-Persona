@@ -1,11 +1,10 @@
 import torch
-from pathlib import Path
+
+from load_pretrained import download_maia3_checkpoint
+
 
 ckpt = torch.load(
-    Path.home()
-    / ".cache/huggingface/hub/models--UofTCSSLab--Maia3-5M/snapshots"
-    / "b6559de2398d7140b985f28fd2c19fb5e47ddabe"
-    / "maia3-5m.pt",
+    download_maia3_checkpoint(),
     map_location="cpu",
 )
 

@@ -1,85 +1,66 @@
-import sys
 from pathlib import Path
-from model_config import get_maia3_5m_config
+from typing import Optional, Union
+
 import torch
-from types import SimpleNamespace
-
+from huggingface_hub import hf_hub_download
 from maia3.models import MAIA3Model
-# cfg = get_maia3_5m_config()
-# print(cfg.dim_vit)
-# print(cfg.num_heads)
-# print(cfg.head_hid_dim)
-# model = MAIA3Model(cfg)
-# print(model.token_projection)
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+
+from model_config import get_maia3_5m_config
 
 
+DEFAULT_REPO_ID = "UofTCSSLab/Maia3-5M"
+DEFAULT_CHECKPOINT_FILENAME = "maia3-5m.pt"
 
-# model = MAIA3Model(cfg)
 
-# checkpoint = torch.load(
-#     Path.home()
-#     / ".cache/huggingface/hub/models--UofTCSSLab--Maia3-5M/snapshots"
-#     / "b6559de2398d7140b985f28fd2c19fb5e47ddabe"
-#     / "maia3-5m.pt",
-#     map_location="cpu",
-# )
-CHECKPOINT = (
-    Path.home()
-    / ".cache/huggingface/hub/models--UofTCSSLab--Maia3-5M/snapshots"
-    / "b6559de2398d7140b985f28fd2c19fb5e47ddabe"
-    / "maia3-5m.pt"
-)
+def download_maia3_checkpoint(
+    repo_id: str = DEFAULT_REPO_ID,
+    filename: str = DEFAULT_CHECKPOINT_FILENAME,
+) -> str:
+    """Download or reuse the cached Maia3 checkpoint from Hugging Face."""
+    return hf_hub_download(repo_id=repo_id, filename=filename)
 
-# # Maia3 checkpoints are raw state_dicts
-# state = {k.replace("smolgen", "gab"): v for k, v in checkpoint.items()}
 
-# missing, unexpected = model.load_state_dict(
-#     state,
-#     strict=False,
-# )
+def _load_state_dict(path: Union[str, Path], map_location="cpu"):
+    checkpoint = torch.load(path, map_location=map_location)
+    return {k.replace("smolgen", "gab"): v for k, v in checkpoint.items()}
 
-# print("Missing:", len(missing))
-# print("Unexpected:", len(unexpected))
 
-# if missing:
-#     print(missing)
+def load_maia3_model(
+    device: Union[str, torch.device] = "cpu",
+    finetuned_path: Optional[Union[str, Path]] = None,
+    repo_id: str = DEFAULT_REPO_ID,
+    checkpoint_filename: str = DEFAULT_CHECKPOINT_FILENAME,
+) -> MAIA3Model:
+    """
+    Load Maia3-5M and optionally overlay a fine-tuned state dict.
 
-# if unexpected:
-#     print(unexpected)
-
-# print()
-
-# print("Example missing keys:")
-# print(missing[:10])
-
-# print()
-
-# print("Example unexpected keys:")
-# print(unexpected[:10])
-
-# print()
-
-# total = sum(p.numel() for p in model.parameters())
-# loaded = 0
-
-# for name, param in model.named_parameters():
-#     if name in state:
-#         loaded += param.numel()
-
-# print(f"Loaded parameters: {loaded:,}/{total:,}")
-
-def load_pretrained_model(device="cpu"):
+    Parameters
+    ----------
+    device:
+        Target device, e.g. "cpu" or "cuda".
+    finetuned_path:
+        Optional local checkpoint produced by training.
+    repo_id/checkpoint_filename:
+        Hugging Face checkpoint source for the base Maia3 model.
+    """
     cfg = get_maia3_5m_config()
-
     model = MAIA3Model(cfg)
 
-    checkpoint = torch.load(CHECKPOINT, map_location=device)
+    base_path = download_maia3_checkpoint(repo_id, checkpoint_filename)
+    base_state = _load_state_dict(base_path, map_location="cpu")
+    model.load_state_dict(base_state, strict=False)
 
-    state = {k.replace("smolgen", "gab"): v for k, v in checkpoint.items()}
-
-    model.load_state_dict(state)
+    if finetuned_path is not None:
+        finetuned_path = Path(finetuned_path)
+        if not finetuned_path.exists():
+            raise FileNotFoundError(f"Fine-tuned checkpoint not found: {finetuned_path}")
+        finetuned_state = _load_state_dict(finetuned_path, map_location="cpu")
+        model.load_state_dict(finetuned_state, strict=False)
 
     model.to(device)
-
     return model
+
+
+# Backward-compatible name used by older test scripts.
+def load_pretrained_model(device="cpu"):
+    return load_maia3_model(device=device)

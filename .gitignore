@@ -2,3 +2,5 @@ lichess_games.pgn
 __pycache__/
 *.csv
 external/
+maia3_finetuned_policy.pt
+best_policy.pt
