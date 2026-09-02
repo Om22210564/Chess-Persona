@@ -184,6 +184,17 @@ Run:
 python src/train.py
 ```
 
+For personalized training on only your own moves, pass your Lichess username:
+
+```bash
+python src/train.py \
+  --pgn-path data/raw/lichess_games.pgn \
+  --username YourLichessUsername \
+  --only-user-moves \
+  --use-pgn-elos \
+  --log-dataset-stats
+```
+
 The best model will be saved as:
 
 ```

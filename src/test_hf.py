@@ -1,16 +1,27 @@
-import torch
-
-from load_pretrained import download_maia3_checkpoint
+import pytest
 
 
-ckpt = torch.load(
-    download_maia3_checkpoint(),
-    map_location="cpu",
-)
+torch = pytest.importorskip("torch")
+pytest.importorskip("huggingface_hub")
+pytest.importorskip("maia3")
 
-print(type(ckpt))
+import load_pretrained
 
-if isinstance(ckpt, dict):
-    print("Keys:")
-    for k in ckpt.keys():
-        print(k)
+
+def test_download_maia3_checkpoint_uses_expected_defaults(monkeypatch):
+    calls = {}
+
+    def fake_hf_hub_download(repo_id, filename):
+        calls["repo_id"] = repo_id
+        calls["filename"] = filename
+        return "/tmp/fake-maia3.pt"
+
+    monkeypatch.setattr(load_pretrained, "hf_hub_download", fake_hf_hub_download)
+
+    path = load_pretrained.download_maia3_checkpoint()
+
+    assert path == "/tmp/fake-maia3.pt"
+    assert calls == {
+        "repo_id": "UofTCSSLab/Maia3-5M",
+        "filename": "maia3-5m.pt",
+    }

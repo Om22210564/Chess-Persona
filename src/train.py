@@ -20,6 +20,13 @@ def parse_args():
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument("--self-elo", type=int, default=1500)
     parser.add_argument("--oppo-elo", type=int, default=1500)
+    parser.add_argument("--username", default=None)
+    parser.add_argument("--only-user-moves", action="store_true")
+    parser.add_argument("--use-pgn-elos", action="store_true")
+    parser.add_argument("--log-dataset-stats", action="store_true")
+    parser.add_argument("--split", choices=["all", "train", "val"], default="all")
+    parser.add_argument("--val-fraction", type=float, default=0.0)
+    parser.add_argument("--split-seed", type=int, default=42)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--num-workers", type=int, default=0)
     return parser.parse_args()
@@ -40,7 +47,16 @@ def train(args):
     if not pgn_path.exists():
         raise FileNotFoundError(f"PGN file not found: {pgn_path}")
 
-    dataset = MaiaDataset(pgn_path)
+    dataset = MaiaDataset(
+        pgn_path,
+        username=args.username,
+        only_user_moves=args.only_user_moves,
+        include_elos=args.use_pgn_elos,
+        split=args.split,
+        val_fraction=args.val_fraction,
+        split_seed=args.split_seed,
+        log_stats=args.log_dataset_stats,
+    )
     if len(dataset) == 0:
         raise ValueError(f"No training samples found in {pgn_path}")
 
@@ -76,22 +92,28 @@ def train(args):
         correct = 0
         total = 0
 
-        for tokens, policy, _ in loader:
+        for batch in loader:
+            if args.use_pgn_elos:
+                tokens, policy, _, self_elo, oppo_elo = batch
+                self_elo = self_elo.to(args.device)
+                oppo_elo = oppo_elo.to(args.device)
+            else:
+                tokens, policy, _ = batch
+                self_elo = torch.full(
+                    (tokens.size(0),),
+                    args.self_elo,
+                    dtype=torch.long,
+                    device=args.device,
+                )
+                oppo_elo = torch.full(
+                    (tokens.size(0),),
+                    args.oppo_elo,
+                    dtype=torch.long,
+                    device=args.device,
+                )
+
             tokens = tokens.to(args.device)
             policy = policy.to(args.device)
-
-            self_elo = torch.full(
-                (tokens.size(0),),
-                args.self_elo,
-                dtype=torch.long,
-                device=args.device,
-            )
-            oppo_elo = torch.full(
-                (tokens.size(0),),
-                args.oppo_elo,
-                dtype=torch.long,
-                device=args.device,
-            )
 
             logits, _, _ = model(tokens, self_elo, oppo_elo)
             loss = criterion(logits, policy)
