@@ -45,6 +45,8 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--num-workers", type=int, default=0)
+    parser.add_argument("--cache-dir", default=None, help="Optional directory for tokenized dataset caches.")
+    parser.add_argument("--rebuild-cache", action="store_true")
     parser.add_argument("--no-progress", action="store_true")
     return parser.parse_args()
 
@@ -98,6 +100,13 @@ def create_optimizer(model, policy_lr, block_lr, weight_decay):
     return torch.optim.AdamW(param_groups, weight_decay=weight_decay)
 
 
+def dataset_cache_path(args, split):
+    if args.cache_dir is None:
+        return None
+    pgn_stem = Path(args.pgn_path).stem
+    return Path(args.cache_dir) / f"{pgn_stem}.{split}.maia-cache.pt"
+
+
 def build_dataset(args, split):
     return MaiaDataset(
         args.pgn_path,
@@ -107,6 +116,8 @@ def build_dataset(args, split):
         split=split,
         val_fraction=args.val_fraction,
         split_seed=args.split_seed,
+        cache_path=dataset_cache_path(args, split),
+        rebuild_cache=args.rebuild_cache,
         log_stats=args.log_dataset_stats,
     )
 

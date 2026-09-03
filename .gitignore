@@ -8,6 +8,7 @@ venv/
 # Data and generated artifacts
 data/raw/
 data/processed/
+data/cache/
 *.csv
 *.pt
 *.pth

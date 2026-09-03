@@ -193,6 +193,7 @@ python src/train.py \
   --only-user-moves \
   --use-pgn-elos \
   --val-fraction 0.2 \
+  --cache-dir data/cache \
   --early-stopping-patience 3 \
   --log-dataset-stats
 ```
@@ -211,6 +212,8 @@ python src/train.py --fine-tune-mode last-two-blocks --lr 1e-4 --block-lr 1e-5
 ```
 
 Training writes per-epoch JSONL metrics to `training_metrics.jsonl` by default, including loss, top-1 accuracy, and top-5 accuracy.
+
+For larger PGNs, use `--cache-dir data/cache` to save tokenized dataset caches. Use `--rebuild-cache` after changing preprocessing logic or if you want to force regeneration.
 
 The best model will be saved as:
 

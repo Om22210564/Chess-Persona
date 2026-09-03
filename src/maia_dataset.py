@@ -1,3 +1,5 @@
+import hashlib
+import json
 import random
 import re
 from collections import deque
@@ -89,6 +91,8 @@ class MaiaDataset(Dataset):
         split: str = "all",
         val_fraction: float = 0.0,
         split_seed: int = 42,
+        cache_path: Optional[Union[str, Path]] = None,
+        rebuild_cache: bool = False,
         log_stats: bool = False,
     ):
         self.history = history
@@ -105,6 +109,8 @@ class MaiaDataset(Dataset):
         self.split = split
         self.val_fraction = val_fraction
         self.split_seed = split_seed
+        self.cache_path = Path(cache_path) if cache_path is not None else None
+        self.rebuild_cache = rebuild_cache
         self.samples = []
         self.stats = {
             "games": 0,
@@ -119,6 +125,13 @@ class MaiaDataset(Dataset):
             "rating_count": 0,
             "average_rating": 0,
         }
+
+        self.cache_metadata = self._build_cache_metadata(pgn_path)
+
+        if self.cache_path and not rebuild_cache and self._load_cache_if_valid():
+            if log_stats:
+                self.print_stats()
+            return
 
         cfg = SimpleNamespace(
             history=history,
@@ -151,8 +164,61 @@ class MaiaDataset(Dataset):
                 2,
             )
 
+        if self.cache_path:
+            self._save_cache()
+
         if log_stats:
             self.print_stats()
+
+    def _build_cache_metadata(self, pgn_path):
+        pgn_path = Path(pgn_path)
+        stat = pgn_path.stat()
+        config = {
+            "pgn_path": str(pgn_path.resolve()),
+            "pgn_mtime_ns": stat.st_mtime_ns,
+            "pgn_size": stat.st_size,
+            "history": self.history,
+            "username": self.username,
+            "only_user_moves": self.only_user_moves,
+            "include_elos": self.include_elos,
+            "include_time_info": self.include_time_info,
+            "default_elo": self.default_elo,
+            "split": self.split,
+            "val_fraction": self.val_fraction,
+            "split_seed": self.split_seed,
+        }
+        config_json = json.dumps(config, sort_keys=True)
+        return {
+            "version": 1,
+            "config": config,
+            "config_hash": hashlib.sha256(config_json.encode("utf-8")).hexdigest(),
+        }
+
+    def _load_cache_if_valid(self):
+        if not self.cache_path.exists():
+            return False
+
+        try:
+            payload = torch.load(self.cache_path, map_location="cpu", weights_only=False)
+        except TypeError:
+            payload = torch.load(self.cache_path, map_location="cpu")
+        if payload.get("metadata") != self.cache_metadata:
+            return False
+
+        self.samples = payload["samples"]
+        self.stats = payload["stats"]
+        return True
+
+    def _save_cache(self):
+        self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(
+            {
+                "metadata": self.cache_metadata,
+                "stats": self.stats,
+                "samples": self.samples,
+            },
+            self.cache_path,
+        )
 
     def _user_color(self, headers):
         if self.username is None:

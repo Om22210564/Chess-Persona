@@ -77,3 +77,16 @@ def test_maia_dataset_supports_game_level_split(tmp_path):
 
     assert len(train_dataset) + len(val_dataset) == len(all_dataset)
     assert train_dataset.stats["games"] + val_dataset.stats["games"] == 2
+
+
+def test_maia_dataset_cache_round_trip(tmp_path):
+    pgn_path = tmp_path / "sample.pgn"
+    cache_path = tmp_path / "sample.cache.pt"
+    pgn_path.write_text(SAMPLE_PGN)
+
+    first = MaiaDataset(pgn_path, cache_path=cache_path)
+    second = MaiaDataset(pgn_path, cache_path=cache_path)
+
+    assert cache_path.exists()
+    assert len(second) == len(first)
+    assert second.stats == first.stats
