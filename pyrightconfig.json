@@ -1,0 +1,10 @@
+{
+  "include": ["src", "legacy"],
+  "exclude": ["external", "**/__pycache__", ".venv", "venv"],
+  "extraPaths": [
+    "./src",
+    "./external/maia3"
+  ],
+  "reportMissingImports": "warning",
+  "reportMissingModuleSource": "warning"
+}

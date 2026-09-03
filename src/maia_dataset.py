@@ -2,10 +2,16 @@ import hashlib
 import json
 import random
 import re
+import sys
 from collections import deque
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Optional, Union
+from typing import Optional, Union, Dict
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+MAIA3_ROOT = PROJECT_ROOT / "external" / "maia3"
+if MAIA3_ROOT.exists() and str(MAIA3_ROOT) not in sys.path:
+    sys.path.insert(0, str(MAIA3_ROOT))
 
 import chess
 import chess.pgn
@@ -67,7 +73,7 @@ def extract_clock(comment: str):
     return clock_to_seconds(match.group(1))
 
 
-def result_value_for_side(result: str, side: chess.Color):
+def result_value_for_side(result: str, side: bool):
     """Class label from the side-to-move perspective: loss=0, draw=1, win=2."""
     if result == "1/2-1/2" or result == "*":
         return 1
@@ -104,6 +110,8 @@ class MaiaDataset(Dataset):
             raise ValueError("split must be one of: all, train, val")
         if not 0 <= val_fraction < 1:
             raise ValueError("val_fraction must be >= 0 and < 1")
+        if only_user_moves and not username:
+            raise ValueError("username is required when only_user_moves=True")
 
         self.default_elo = default_elo
         self.split = split
@@ -112,7 +120,7 @@ class MaiaDataset(Dataset):
         self.cache_path = Path(cache_path) if cache_path is not None else None
         self.rebuild_cache = rebuild_cache
         self.samples = []
-        self.stats = {
+        self.stats: Dict[str, int | float] = {
             "games": 0,
             "samples": 0,
             "skipped_non_user_moves": 0,
@@ -123,7 +131,7 @@ class MaiaDataset(Dataset):
             "skipped_split_games": 0,
             "rating_sum": 0,
             "rating_count": 0,
-            "average_rating": 0,
+            "average_rating": 0.0,
         }
 
         self.cache_metadata = self._build_cache_metadata(pgn_path)
@@ -195,13 +203,14 @@ class MaiaDataset(Dataset):
         }
 
     def _load_cache_if_valid(self):
-        if not self.cache_path.exists():
+        cache_path = self.cache_path
+        if cache_path is None or not cache_path.exists():
             return False
 
         try:
-            payload = torch.load(self.cache_path, map_location="cpu", weights_only=False)
+            payload = torch.load(cache_path, map_location="cpu", weights_only=False)
         except TypeError:
-            payload = torch.load(self.cache_path, map_location="cpu")
+            payload = torch.load(cache_path, map_location="cpu")
         if payload.get("metadata") != self.cache_metadata:
             return False
 
@@ -210,14 +219,18 @@ class MaiaDataset(Dataset):
         return True
 
     def _save_cache(self):
-        self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path = self.cache_path
+        if cache_path is None:
+            return
+
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
         torch.save(
             {
                 "metadata": self.cache_metadata,
                 "stats": self.stats,
                 "samples": self.samples,
             },
-            self.cache_path,
+            cache_path,
         )
 
     def _user_color(self, headers):

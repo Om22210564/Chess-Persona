@@ -225,9 +225,23 @@ best_policy.pt
 
 ## Evaluation
 
+Evaluate the first 20 positions with board output:
+
 ```bash
-python src/evaluate.py
+python src/evaluate.py --model-path best_policy.pt --pgn-path data/raw/sample.pgn
 ```
+
+Evaluate an entire PGN quietly and report aggregate metrics:
+
+```bash
+python src/evaluate.py \
+  --model-path best_policy.pt \
+  --pgn-path data/raw/sample.pgn \
+  --all-positions \
+  --quiet
+```
+
+The evaluation report includes top-1/top-5 accuracy overall and grouped by color, opening, and game phase.
 
 ---
 
@@ -245,7 +259,13 @@ Grant execute permission:
 chmod +x Chess-Persona.sh
 ```
 
-If your checkpoint is not named `best_policy.pt` or is stored in a different location, edit `Chess-Persona.sh` and update the checkpoint path accordingly.
+If your checkpoint is not named `best_policy.pt` or is stored in a different location, either edit `Chess-Persona.sh` or set:
+
+```bash
+export CHESS_PERSONA_CHECKPOINT=/path/to/your/checkpoint.pt
+```
+
+The launcher checks that Maia3 is installed and that the checkpoint exists before starting.
 
 ### 2. Add the engine in Nibbler
 

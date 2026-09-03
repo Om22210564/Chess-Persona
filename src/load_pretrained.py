@@ -1,5 +1,11 @@
+import sys
 from pathlib import Path
 from typing import Optional, Union
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+MAIA3_ROOT = PROJECT_ROOT / "external" / "maia3"
+if MAIA3_ROOT.exists() and str(MAIA3_ROOT) not in sys.path:
+    sys.path.insert(0, str(MAIA3_ROOT))
 
 import torch
 from huggingface_hub import hf_hub_download
