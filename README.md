@@ -192,8 +192,25 @@ python src/train.py \
   --username YourLichessUsername \
   --only-user-moves \
   --use-pgn-elos \
+  --val-fraction 0.2 \
+  --early-stopping-patience 3 \
   --log-dataset-stats
 ```
+
+Useful training options:
+
+```bash
+# Head-only fine-tuning, safest default
+python src/train.py --fine-tune-mode policy
+
+# Unfreeze the final transformer block with a smaller LR
+python src/train.py --fine-tune-mode last-block --lr 1e-4 --block-lr 1e-5
+
+# Unfreeze the final two transformer blocks
+python src/train.py --fine-tune-mode last-two-blocks --lr 1e-4 --block-lr 1e-5
+```
+
+Training writes per-epoch JSONL metrics to `training_metrics.jsonl` by default, including loss, top-1 accuracy, and top-5 accuracy.
 
 The best model will be saved as:
 
